@@ -1,14 +1,26 @@
 #!/bin/sh
 #Debe tener postfix configurado en su sistema para poder utilizar este script
-#Si lo va a probar con un dominio que no deje el proceso corriendo eternamente, podría
-#terminar en spam
 
 DOMINIO=""
 ADMINISTRADOR=""
+CELULAR=""
+OPCION = ""
+
 echo "Introduzca el nombre del dominio a consultar: "
 read DOMINIO
-echo "Introduzca la dirección de correo del administrador: "
-read ADMINISTRADOR
+echo "Marque la opción que prefiere: "
+echo "1- Notificar al administrador de las fallas a través de un email"
+echo "2- Notificar al administrador de las fallas a través de un sms"
+read OPCION
+
+if $OPCION==1
+    then
+        echo "Introduzca la dirección de correo del administrador: "
+        read ADMINISTRADOR
+    else
+        echo "Introduzca el número de celular del administrador: "
+        read CELULAR
+
 while :
     do
         echo "Se comprobará si el dominio está arriba o presenta problemas: "
@@ -17,23 +29,29 @@ while :
                 echo "El dominio $DOMINIO está funcionando correctamente"
             else
                 echo "Hay problemas en el dominio"
-                if traceroute $DOMINIO > trace.txt
+                echo "Caída del dominio $DOMINIO" > log_fallas.txt
+                if traceroute $DOMINIO 1>/dev/null 2>/dev/null
                     then
-                        echo "Se realizará un diágnostico sobre la pérdida de paquetes y se guardará en un archivo log_fallas.txt"
-                        traceroute $DOMINIO > log_fallas.txt
-                        mail -s "Dominio caído" $ADMINISTRADOR <<EOF
-Saludos cordiales,
-El dominio $DOMINIO presenta problemas.
-En el archivo log_fallas.txt se explica detalladamente la pérdida de paquetes
-EOF
+                        echo "Se realizará un diágnostico sobre la pérdida de paquetes y se guardará en el system log"
+                        ping -c 1 $DOMINIO 2>&1 | logger -s -t $(basename $0)
+                        traceroute $DOMINIO 2>&1 | logger -s -t $(basename $0)
                     else
                         echo "El dominio está caído"
                 fi
-               mail -s "Dominio caído" $ADMINISTRADOR <<EOF
+
+            if $OPCION==1
+                then
+                    mail -s "Dominio caído" $ADMINISTRADOR <<EOF
 Saludos cordiales,
-El dominio $DOMINIO está caído
+El dominio $DOMINIO está caído o presenta problemas
 Gracias por su atención
 EOF
+            else
+                curl -X POST https://textbelt.com/text \
+                --data-urlencode phone=$CELULAR \
+                --data-urlencode message='kity' \
+                -d key=textbelt 
+        exit 0
         fi
 
         sleep 60
