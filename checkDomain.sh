@@ -4,22 +4,24 @@
 DOMINIO=""
 ADMINISTRADOR=""
 CELULAR=""
-OPCION = ""
+OPCION=""
 
 echo "Introduzca el nombre del dominio a consultar: "
 read DOMINIO
 echo "Marque la opción que prefiere: "
-echo "1- Notificar al administrador de las fallas a través de un email"
-echo "2- Notificar al administrador de las fallas a través de un sms"
+echo "a- Notificar al administrador de las fallas a través de un email"
+echo "b- Notificar al administrador de las fallas a través de un sms"
 read OPCION
 
-if $OPCION==1
+if [ "$OPCION" = "a" ]
     then
         echo "Introduzca la dirección de correo del administrador: "
         read ADMINISTRADOR
     else
         echo "Introduzca el número de celular del administrador: "
         read CELULAR
+
+fi
 
 while :
     do
@@ -29,7 +31,7 @@ while :
                 echo "El dominio $DOMINIO está funcionando correctamente"
             else
                 echo "Hay problemas en el dominio"
-                echo "Caída del dominio $DOMINIO" > log_fallas.txt
+                echo "$(date) Caída del dominio $DOMINIO" > log_fallas.txt
                 if traceroute $DOMINIO 1>/dev/null 2>/dev/null
                     then
                         echo "Se realizará un diágnostico sobre la pérdida de paquetes y se guardará en el system log"
@@ -39,7 +41,7 @@ while :
                         echo "El dominio está caído"
                 fi
 
-            if $OPCION==1
+            if [ "$OPCION" = "a" ]
                 then
                     mail -s "Dominio caído" $ADMINISTRADOR <<EOF
 Saludos cordiales,
@@ -49,8 +51,9 @@ EOF
             else
                 curl -X POST https://textbelt.com/text \
                 --data-urlencode phone=$CELULAR \
-                --data-urlencode message='kity' \
+                --data-urlencode message='Saludos cordiales, El dominio $DOMINIO está caído o presenta problemas' \
                 -d key=textbelt 
+            fi
         exit 0
         fi
 
