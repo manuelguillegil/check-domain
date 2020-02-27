@@ -31,7 +31,7 @@ while :
                 echo "El dominio $DOMINIO está funcionando correctamente"
             else
                 echo "Hay problemas en el dominio"
-                echo "$(date) Caída del dominio $DOMINIO" > log_fallas.txt
+                echo "$(date) Caída del dominio $DOMINIO" >> log_fallas.txt
                 if traceroute $DOMINIO 1>/dev/null 2>/dev/null
                     then
                         echo "Se realizará un diágnostico sobre la pérdida de paquetes y se guardará en el system log"
